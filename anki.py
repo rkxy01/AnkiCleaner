@@ -60,15 +60,14 @@ class Formatter:
         # 不要なタグや空白を削除
         string = re.sub(r'<br>|</?div>|&nbsp;', '', string)
 
-        # [sound:]タグの位置を調整
-        string = re.sub(r'\s+\[sound:', ' [sound:', string)
+        # .[sound:, ![sound:, ?[sound: を正しい形式に修正
+        string = re.sub(r'(\.|!|\?)\[sound:', r'\1 [sound:', string)
 
-        # ".[sound:" を ". [sound:" に修正
-        string = re.sub(r'\.\[sound:', '. [sound:', string)
+        # .!, !?, ?. のあとにスペースを追加
+        string = re.sub(r'([.!?])(?=[^\s])', r'\1 ', string)
 
         # 文間の空白を1つに統一
         string = re.sub(r'\s{2,}', ' ', string)
-        
         return string.strip()
 
 
