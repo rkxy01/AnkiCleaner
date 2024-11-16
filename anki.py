@@ -83,6 +83,10 @@ def reform_listening():
 
     # ノート内容を整形
     for note in notes:
+        if not 'Text' in note['fields']:
+            print("ignore:", note)
+            continue
+        
         text_field = note['fields']['Text']['value']
         note['fields']['Text']['value'] = formatter.format_listening_html(text_field)
 
