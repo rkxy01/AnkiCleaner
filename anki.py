@@ -60,21 +60,33 @@ class Formatter:
         # 不要なタグや空白を削除
         string = re.sub(r'<br>|</?div>|&nbsp;', '', string)
 
-        # [sound:]部分を一時的に保護
-        sound_tags = re.findall(r'\[sound:[^\]]+\]', string)
-        for i, tag in enumerate(sound_tags):
-            string = string.replace(tag, f"__SOUND_TAG_{i}__")
+        # 特定の文字列を保護
+        patterns = [
+            (r'\[sound:[^\]]+\]', "__SOUND_TAG_"),
+            (r'\.\.\.', "__ELLIPSIS_TAG_"),
+            (r'!\?', "__EXCLAMATION_TAG_")
+        ]
 
-        # .!, !?, ?. のあとにスペースを追加（[sound:]以外）
+        # 各パターンを保護
+        protected = {}
+        for pattern, tag_base in patterns:
+            matches = re.findall(pattern, string)
+            for i, match in enumerate(matches):
+                placeholder = f"{tag_base}{i}__"
+                string = string.replace(match, placeholder)
+                protected[placeholder] = match
+
+        # ., !, ?のあとにスペースを入れる
         string = re.sub(
-            r'(?<!\.\.\.)(?<![!?])([.!?])(?!\s|\.\.\.|\[sound:[^\]]+\]|__SOUND_TAG_\d+__)',
+            r'([.!?])(?!\s)',
             r'\1 ',
             string
         )
 
-        # 保護した[sound:]タグを戻す
-        for i, tag in enumerate(sound_tags):
-            string = string.replace(f"__SOUND_TAG_{i}__", tag)
+
+        # 保護したタグを元に戻す
+        for placeholder, original in protected.items():
+            string = string.replace(placeholder, original)
 
         # 文間の空白を1つに統一
         string = re.sub(r'\s{2,}', ' ', string)
