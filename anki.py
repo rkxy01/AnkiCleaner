@@ -60,11 +60,21 @@ class Formatter:
         # 不要なタグや空白を削除
         string = re.sub(r'<br>|</?div>|&nbsp;', '', string)
 
-        # .[sound:, ![sound:, ?[sound: を正しい形式に修正
-        string = re.sub(r'(\.|!|\?)\[sound:', r'\1 [sound:', string)
+        # [sound:]部分を一時的に保護
+        sound_tags = re.findall(r'\[sound:[^\]]+\]', string)
+        for i, tag in enumerate(sound_tags):
+            string = string.replace(tag, f"__SOUND_TAG_{i}__")
 
-        # .!, !?, ?. のあとにスペースを追加
-        string = re.sub(r'([.!?])(?=[^\s])', r'\1 ', string)
+        # .!, !?, ?. のあとにスペースを追加（[sound:]以外）
+        string = re.sub(
+            r'(?<!\.\.\.)(?<![!?])([.!?])(?!\s|\.\.\.|\[sound:[^\]]+\]|__SOUND_TAG_\d+__)',
+            r'\1 ',
+            string
+        )
+
+        # 保護した[sound:]タグを戻す
+        for i, tag in enumerate(sound_tags):
+            string = string.replace(f"__SOUND_TAG_{i}__", tag)
 
         # 文間の空白を1つに統一
         string = re.sub(r'\s{2,}', ' ', string)
@@ -86,7 +96,7 @@ def reform_listening():
         if not 'Text' in note['fields']:
             print("ignore:", note)
             continue
-        
+
         text_field = note['fields']['Text']['value']
         note['fields']['Text']['value'] = formatter.format_listening_html(text_field)
 
